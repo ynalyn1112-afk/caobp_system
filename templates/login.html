@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - AOBP System{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    [data-theme="dark"] body {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    }
+    
+    .login-container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        overflow: hidden;
+        max-width: 400px;
+        width: 100%;
+        margin: 20px;
+    }
+    
+    .login-header {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 40px 30px;
+        text-align: center;
+    }
+    
+    .login-header h2 {
+        margin: 0;
+        font-weight: 700;
+    }
+    
+    .login-header p {
+        margin: 10px 0 0 0;
+        opacity: 0.9;
+    }
+    
+    .login-body {
+        padding: 40px 30px;
+    }
+    
+    .form-floating {
+        margin-bottom: 20px;
+    }
+    
+    .form-floating input {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-floating input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-login {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 10px;
+        padding: 15px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-login:disabled {
+        opacity: 0.6;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .forgot-password {
+        text-align: center;
+        margin-top: 20px;
+    }
+    
+    .forgot-password a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s ease;
+    }
+    
+    .forgot-password a:hover {
+        color: #764ba2;
+    }
+    
+    .back-to-home {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
+        transition: opacity 0.3s ease;
+    }
+    
+    .back-to-home:hover {
+        color: white;
+        opacity: 0.8;
+    }
+    
+    .loading-spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ffffff;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'landing_page' %}" class="back-to-home">
+    <i class="bi bi-arrow-left me-2"></i>Back to Home
+</a>
+
+<button class="btn btn-outline-light position-absolute" style="top: 20px; right: 20px;" id="themeToggle">
+    <i class="bi bi-moon"></i>
+</button>
+
+<div class="login-container">
+    <div class="login-header">
+        <h2><i class="bi bi-buildings me-2"></i>AOBP System</h2>
+        <p>Annual Operational and Budget Plan</p>
+    </div>
+    
+    <div class="login-body">
+        <form id="loginForm" method="post">
+            {% csrf_token %}
+            
+            <div class="form-floating">
+                <input type="text" class="form-control" id="username" name="username" placeholder="Username" required>
+                <label for="username"><i class="bi bi-person me-2"></i>Username</label>
+            </div>
+            
+            <div class="form-floating">
+                <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                <label for="password"><i class="bi bi-lock me-2"></i>Password</label>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-login" id="loginBtn">
+                <span class="btn-text">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                </span>
+                <div class="loading-spinner"></div>
+            </button>
+        </form>
+        
+        <div class="forgot-password">
+            <a href="{% url 'forgot_password' %}">
+                <i class="bi bi-question-circle me-2"></i>Forgot Password?
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const btnText = loginBtn.querySelector('.btn-text');
+    const loadingSpinner = loginBtn.querySelector('.loading-spinner');
+    
+    loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Show loading state
+        btnText.style.display = 'none';
+        loadingSpinner.style.display = 'inline-block';
+        loginBtn.disabled = true;
+        
+        // Get form data
+        const formData = new FormData(loginForm);
+        
+        // Submit via AJAX
+        fetch('{% url "ajax_login" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success toast
+                showToast('Login successful! Redirecting...', 'success');
+                
+                // Redirect after short delay
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 1000);
+            } else {
+                // Show error toast
+                showToast(data.message, 'error');
+                
+                // Reset button state
+                btnText.style.display = 'inline';
+                loadingSpinner.style.display = 'none';
+                loginBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred. Please try again.', 'error');
+            
+            // Reset button state
+            btnText.style.display = 'inline';
+            loadingSpinner.style.display = 'none';
+            loginBtn.disabled = false;
+        });
+    });
+    
+    function showToast(message, type) {
+        const toastContainer = document.getElementById('toast-container');
+        const toastId = 'toast-' + Date.now();
+        
+        const toastHtml = `
+            <div class="toast show" id="${toastId}" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <i class="bi bi-${type === 'error' ? 'exclamation-triangle-fill text-danger' : 'check-circle-fill text-success'} me-2"></i>
+                    <strong class="me-auto">${type === 'error' ? 'Error' : 'Success'}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body">
+                    ${message}
+                </div>
+            </div>
+        `;
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            const toast = document.getElementById(toastId);
+            if (toast) {
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.hide();
+            }
+        }, 5000);
+    }
+});
+</script>
+{% endblock %}

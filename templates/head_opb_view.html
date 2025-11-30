@@ -1,0 +1,419 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}View OPB - AOBP System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 250px;
+        background: var(--card-bg);
+        border-right: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .sidebar.collapsed {
+        width: 70px;
+    }
+    
+    .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--border-color);
+        text-align: center;
+    }
+    
+    .sidebar-header h4 {
+        margin: 0;
+        color: var(--text-primary);
+        transition: opacity 0.3s ease;
+    }
+    
+    .sidebar.collapsed .sidebar-header h4 {
+        opacity: 0;
+    }
+    
+    .sidebar-nav {
+        padding: 20px 0;
+    }
+    
+    .nav-item {
+        margin-bottom: 5px;
+    }
+    
+    .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+    }
+    
+    .nav-link:hover {
+        background: rgba(102, 126, 234, 0.1);
+        color: var(--primary-color);
+        border-left-color: var(--primary-color);
+    }
+    
+    .nav-link.active {
+        background: rgba(102, 126, 234, 0.1);
+        color: var(--primary-color);
+        border-left-color: var(--primary-color);
+    }
+    
+    .nav-link i {
+        width: 20px;
+        margin-right: 15px;
+        text-align: center;
+    }
+    
+    .sidebar.collapsed .nav-link span {
+        opacity: 0;
+        width: 0;
+        overflow: hidden;
+    }
+    
+    .main-content {
+        margin-left: 250px;
+        min-height: 100vh;
+        background: var(--bg-secondary);
+        transition: margin-left 0.3s ease;
+    }
+    
+    .main-content.expanded {
+        margin-left: 70px;
+    }
+    
+    .top-navbar {
+        background: var(--card-bg);
+        border-bottom: 1px solid var(--border-color);
+        padding: 15px 30px;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+    
+    .content-area {
+        padding: 30px;
+    }
+    
+    .details-container {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        margin-bottom: 30px;
+    }
+    
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-approved {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-rejected {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .status-under-review {
+        background: #cce5ff;
+        color: #004085;
+    }
+    
+    .hamburger {
+        display: none;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--text-primary);
+        cursor: pointer;
+    }
+    
+    @media (max-width: 768px) {
+        .sidebar {
+            transform: translateX(-100%);
+        }
+        
+        .sidebar.show {
+            transform: translateX(0);
+        }
+        
+        .main-content {
+            margin-left: 0;
+        }
+        
+        .hamburger {
+            display: block;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h4><i class="bi bi-buildings me-2"></i>DEBESMSCAT AOBP</h4>
+    </div>
+    
+    <nav class="sidebar-nav">
+        <div class="nav-item">
+            <a href="{% url 'head_dashboard' %}" class="nav-link">
+                <i class="bi bi-house-door"></i>
+                <span>Dashboard</span>
+            </a>
+        </div>
+        
+        <div class="nav-item">
+            <a href="{% url 'head_opb' %}" class="nav-link active">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>OPB</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'head_notifications' %}" class="nav-link">
+                <i class="bi bi-bell"></i>
+                <span>Notifications</span>
+                {% if unread_count > 0 %}
+                <span class="badge bg-danger ms-auto">{{ unread_count }}</span>
+                {% endif %}
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="#" class="nav-link" onclick="confirmLogout()">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+    <!-- Top Navbar -->
+    <div class="top-navbar">
+        <div class="d-flex align-items-center">
+            <button class="hamburger me-3" id="hamburger">
+                <i class="bi bi-list"></i>
+            </button>
+            <h3 class="mb-0">View OPB</h3>
+        </div>
+        
+        <div class="d-flex align-items-center gap-3">
+            <button class="btn btn-outline-primary" id="themeToggle">
+                <i class="bi bi-moon"></i>
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle me-2"></i>{{ user.get_full_name|default:user.username }}
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'logout' %}" onclick="confirmLogout()"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Content Area -->
+    <div class="content-area">
+        <!-- Request Details -->
+        <div class="details-container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Submission Information</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Unit Head:</strong></td>
+                            <td>{{ opb_request.department_head.get_full_name|default:opb_request.department_head.username }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Unit:</strong></td>
+                            <td><span class="badge bg-info">{{ opb_request.get_department_display }}</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Fiscal Year:</strong></td>
+                            <td>{{ opb_request.fiscal_year }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Unit:</strong></td>
+                            <td>{{ opb_request.unit|default:"N/A" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Status:</strong></td>
+                            <td><span class="status-badge status-{{ opb_request.status }}">{{ opb_request.get_status_display }}</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Created:</strong></td>
+                            <td>{{ opb_request.created_at|date:"M d, Y g:i A" }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5>Summary</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Total Items:</strong></td>
+                            <td><span class="badge bg-primary">{{ opb_request.item_count }} items</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Budget:</strong></td>
+                            <td><strong>₱{{ opb_request.total_budget_amount|floatformat:2 }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Fiscal Year:</strong></td>
+                            <td>{{ opb_request.fiscal_year }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5>OPB Items</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>KRA No.</th>
+                                    <th>Objective No.</th>
+                                    <th>Indicators</th>
+                                    <th>Annual Target</th>
+                                    <th>Activities</th>
+                                    <th>Timeframe</th>
+                                    <th>Budget Amount</th>
+                                    <th>Source of Fund</th>
+                                    <th>Responsible Units</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in opb_request.items.all %}
+                                <tr>
+                                    <td>{{ item.kra_no|default:"N/A" }}</td>
+                                    <td>{{ item.objective_no|default:"N/A" }}</td>
+                                    <td>
+                                        <div style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">
+                                            {{ item.indicators|truncatechars:50|default:"N/A" }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">
+                                            {{ item.annual_target|truncatechars:50|default:"N/A" }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">
+                                            {{ item.activities|truncatechars:50|default:"N/A" }}
+                                        </div>
+                                    </td>
+                                    <td>{{ item.timeframe|default:"N/A" }}</td>
+                                    <td><strong>₱{{ item.budget_amount|floatformat:2 }}</strong></td>
+                                    <td>{{ item.source_of_fund|default:"N/A" }}</td>
+                                    <td>{{ item.responsible_units|default:"N/A" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="9" class="text-center text-muted py-4">
+                                        <i class="bi bi-file-text" style="font-size: 2rem; opacity: 0.3;"></i>
+                                        <br>
+                                        No OPB items found
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            {% if opb_request.admin_notes %}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5>Admin Notes</h5>
+                    <div class="card">
+                        <div class="card-body">
+                            <p>{{ opb_request.admin_notes }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="text-center">
+            <a href="{% url 'head_opb' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to OPB
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Logout Confirmation Modal -->
+<div class="modal fade" id="logoutModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Logout</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout? Any unsaved changes will be lost.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sidebar toggle
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    
+    hamburger.addEventListener('click', function() {
+        sidebar.classList.toggle('show');
+    });
+    
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768 && !sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+            sidebar.classList.remove('show');
+        }
+    });
+});
+
+function confirmLogout() {
+    event.preventDefault();
+    const modal = new bootstrap.Modal(document.getElementById('logoutModal'));
+    modal.show();
+}
+</script>
+{% endblock %}
+                        

@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Verify Code - AOBP System{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .verify-container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        overflow: hidden;
+        max-width: 450px;
+        width: 100%;
+        margin: 20px;
+    }
+    
+    .verify-header {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 40px 30px;
+        text-align: center;
+    }
+    
+    .verify-header h2 {
+        margin: 0;
+        font-weight: 700;
+    }
+    
+    .verify-header p {
+        margin: 10px 0 0 0;
+        opacity: 0.9;
+    }
+    
+    .verify-body {
+        padding: 40px 30px;
+    }
+    
+    .code-inputs {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 30px;
+    }
+    
+    .code-input {
+        width: 50px;
+        height: 50px;
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .code-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        outline: none;
+    }
+    
+    .btn-verify {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 10px;
+        padding: 15px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    
+    .btn-verify:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-verify:disabled {
+        opacity: 0.6;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .back-to-forgot {
+        text-align: center;
+        margin-top: 20px;
+    }
+    
+    .back-to-forgot a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s ease;
+    }
+    
+    .back-to-forgot a:hover {
+        color: #764ba2;
+    }
+    
+    .back-to-home {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
+        transition: opacity 0.3s ease;
+    }
+    
+    .back-to-home:hover {
+        color: white;
+        opacity: 0.8;
+    }
+    
+    .loading-spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ffffff;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .info-box {
+        background: #e8f5e8;
+        border: 1px solid #c8e6c9;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .info-box i {
+        color: #4caf50;
+        margin-right: 10px;
+    }
+    
+    .timer {
+        text-align: center;
+        margin-bottom: 20px;
+        font-weight: 600;
+        color: #667eea;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'landing_page' %}" class="back-to-home">
+    <i class="bi bi-arrow-left me-2"></i>Back to Home
+</a>
+
+<div class="verify-container">
+    <div class="verify-header">
+        <h2><i class="bi bi-shield-check me-2"></i>Verify Code</h2>
+        <p>Enter the 6-digit code sent to your email</p>
+    </div>
+    
+    <div class="verify-body">
+        <div class="info-box">
+            <i class="bi bi-info-circle"></i>
+            <strong>Code sent to:</strong> {{ user.email }}<br>
+            <small>Please check your email and enter the 6-digit verification code below.</small>
+        </div>
+        
+        <div class="timer" id="timer">
+            Code expires in: <span id="countdown">10:00</span>
+        </div>
+        
+        <form method="post" id="verifyForm">
+            {% csrf_token %}
+            
+            <div class="code-inputs">
+                <input type="text" class="code-input" maxlength="1" data-index="0" required>
+                <input type="text" class="code-input" maxlength="1" data-index="1" required>
+                <input type="text" class="code-input" maxlength="1" data-index="2" required>
+                <input type="text" class="code-input" maxlength="1" data-index="3" required>
+                <input type="text" class="code-input" maxlength="1" data-index="4" required>
+                <input type="text" class="code-input" maxlength="1" data-index="5" required>
+            </div>
+            
+            <input type="hidden" name="code" id="hiddenCode">
+            
+            <button type="submit" class="btn btn-primary btn-verify" id="verifyBtn">
+                <span class="btn-text">
+                    <i class="bi bi-check-circle me-2"></i>Verify Code
+                </span>
+                <div class="loading-spinner"></div>
+            </button>
+        </form>
+        
+        <div class="back-to-forgot">
+            <a href="{% url 'forgot_password' %}">
+                <i class="bi bi-arrow-left me-2"></i>Back to Forgot Password
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const codeInputs = document.querySelectorAll('.code-input');
+    const hiddenCode = document.getElementById('hiddenCode');
+    const verifyForm = document.getElementById('verifyForm');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const btnText = verifyBtn.querySelector('.btn-text');
+    const loadingSpinner = verifyBtn.querySelector('.loading-spinner');
+    
+    // Timer countdown
+    let timeLeft = 600; // 10 minutes in seconds
+    const countdownElement = document.getElementById('countdown');
+    
+    const timer = setInterval(() => {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        countdownElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            countdownElement.textContent = 'Expired';
+            countdownElement.style.color = '#dc3545';
+            verifyBtn.disabled = true;
+        }
+        
+        timeLeft--;
+    }, 1000);
+    
+    // Code input handling
+    codeInputs.forEach((input, index) => {
+        input.addEventListener('input', function(e) {
+            const value = e.target.value;
+            
+            // Only allow digits
+            if (!/^\d$/.test(value)) {
+                e.target.value = '';
+                return;
+            }
+            
+            // Move to next input
+            if (value && index < codeInputs.length - 1) {
+                codeInputs[index + 1].focus();
+            }
+            
+            // Update hidden input
+            updateHiddenCode();
+        });
+        
+        input.addEventListener('keydown', function(e) {
+            // Handle backspace
+            if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                codeInputs[index - 1].focus();
+            }
+        });
+        
+        input.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const pastedData = e.clipboardData.getData('text');
+            const digits = pastedData.replace(/\D/g, '').slice(0, 6);
+            
+            digits.split('').forEach((digit, i) => {
+                if (codeInputs[i]) {
+                    codeInputs[i].value = digit;
+                }
+            });
+            
+            updateHiddenCode();
+            
+            // Focus last filled input
+            const lastFilledIndex = Math.min(digits.length - 1, codeInputs.length - 1);
+            codeInputs[lastFilledIndex].focus();
+        });
+    });
+    
+    function updateHiddenCode() {
+        const code = Array.from(codeInputs).map(input => input.value).join('');
+        hiddenCode.value = code;
+        
+        // Enable/disable verify button
+        verifyBtn.disabled = code.length !== 6;
+    }
+    
+    verifyForm.addEventListener('submit', function(e) {
+        // Show loading state
+        btnText.style.display = 'none';
+        loadingSpinner.style.display = 'inline-block';
+        verifyBtn.disabled = true;
+    });
+});
+</script>
+{% endblock %}

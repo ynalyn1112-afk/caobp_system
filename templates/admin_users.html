@@ -1,0 +1,1009 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}User Management - AOBP System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 250px;
+        background: var(--card-bg);
+        border-right: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .sidebar.collapsed {
+        width: 70px;
+    }
+    
+    .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--border-color);
+        text-align: center;
+    }
+    
+    .sidebar-header h4 {
+        margin: 0;
+        color: var(--text-primary);
+        transition: opacity 0.3s ease;
+    }
+    
+    .sidebar.collapsed .sidebar-header h4 {
+        opacity: 0;
+    }
+    
+    .sidebar-nav {
+        padding: 20px 0;
+    }
+    
+    .nav-item {
+        margin-bottom: 5px;
+    }
+    
+    .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+    }
+    
+    .nav-link:hover {
+        background: rgba(102, 126, 234, 0.1);
+        color: var(--primary-color);
+        border-left-color: var(--primary-color);
+    }
+    
+    .nav-link.active {
+        background: rgba(102, 126, 234, 0.1);
+        color: var(--primary-color);
+        border-left-color: var(--primary-color);
+    }
+    
+    .nav-link i {
+        width: 20px;
+        margin-right: 15px;
+        text-align: center;
+    }
+    
+    .sidebar.collapsed .nav-link span {
+        opacity: 0;
+        width: 0;
+        overflow: hidden;
+    }
+    
+    .main-content {
+        margin-left: 250px;
+        min-height: 100vh;
+        background: var(--bg-secondary);
+        transition: margin-left 0.3s ease;
+    }
+    
+    .main-content.expanded {
+        margin-left: 70px;
+    }
+    
+    .top-navbar {
+        background: var(--card-bg);
+        border-bottom: 1px solid var(--border-color);
+        padding: 15px 30px;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+    
+    .content-area {
+        padding: 30px;
+    }
+    
+    .search-container {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        margin-bottom: 30px;
+    }
+    
+    .table-container {
+        background: var(--card-bg);
+        border-radius: 15px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+    
+    .table {
+        margin-bottom: 0;
+    }
+    
+    .table thead {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+    
+    .table tbody tr:hover {
+        background: rgba(102, 126, 234, 0.05);
+    }
+    
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .status-active {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .role-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .role-admin {
+        background: #cce5ff;
+        color: #004085;
+    }
+    
+    .role-dept-head {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .hamburger {
+        display: none;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--text-primary);
+        cursor: pointer;
+    }
+    
+    @media (max-width: 768px) {
+        .sidebar {
+            transform: translateX(-100%);
+        }
+        
+        .sidebar.show {
+            transform: translateX(0);
+        }
+        
+        .main-content {
+            margin-left: 0;
+        }
+        
+        .hamburger {
+            display: block;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h4><i class="bi bi-buildings me-2"></i>DEBESMSCAT AOBP</h4>
+    </div>
+    
+    <nav class="sidebar-nav">
+        <div class="nav-item">
+            <a href="{% url 'admin_dashboard' %}" class="nav-link">
+                <i class="bi bi-house-door"></i>
+                <span>Dashboard</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'admin_users' %}" class="nav-link active">
+                <i class="bi bi-people"></i>
+                <span>User Management</span>
+            </a>
+        </div>
+        
+        <div class="nav-item">
+            <a href="{% url 'admin_opb' %}" class="nav-link">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>OPB Submissions</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'admin_reports' %}" class="nav-link">
+                <i class="bi bi-file-earmark-bar-graph"></i>
+                <span>Reports</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'admin_settings' %}" class="nav-link">
+                <i class="bi bi-gear"></i>
+                <span>Settings</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="#" class="nav-link" onclick="confirmLogout()">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+    <!-- Top Navbar -->
+    <div class="top-navbar">
+        <div class="d-flex align-items-center">
+            <button class="hamburger me-3" id="hamburger">
+                <i class="bi bi-list"></i>
+            </button>
+            <h3 class="mb-0">User Management</h3>
+        </div>
+        
+        <div class="d-flex align-items-center gap-3">
+            <button class="btn btn-outline-primary" id="themeToggle">
+                <i class="bi bi-moon"></i>
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle me-2"></i>{{ user.get_full_name|default:user.username }}
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'logout' %}" onclick="confirmLogout()"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Content Area -->
+    <div class="content-area">
+        <!-- Search and Add User -->
+        <div class="search-container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search users by name, username, or email..." value="{{ search_query }}">
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                        <i class="bi bi-person-plus me-2"></i>Add User
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Users Table -->
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Full Name</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Unit</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user_obj in users %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar me-3">
+                                        <i class="bi bi-person-circle" style="font-size: 2rem; color: var(--primary-color);"></i>
+                                    </div>
+                                    <div>
+                                        <strong>{{ user_obj.get_full_name|default:"No Name" }}</strong>
+                                        <br>
+                                        <small class="text-muted">Joined {{ user_obj.date_joined|date:"M d, Y" }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ user_obj.username }}</td>
+                            <td>{{ user_obj.email }}</td>
+                            <td>
+                                {% if user_obj.department %}
+                                    <span class="badge bg-info">{{ user_obj.get_department_display }}</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="role-badge role-{{ user_obj.role }}">
+                                    {{ user_obj.get_role_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if user_obj.is_active %}
+                                    <span class="status-badge status-active">Active</span>
+                                {% else %}
+                                    <span class="status-badge status-inactive">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editUser('{{ user_obj.id }}')" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-{% if user_obj.is_active %}warning{% else %}success{% endif %}" onclick="confirmToggleUserStatus('{{ user_obj.id }}', {{ user_obj.is_active|yesno:"true,false" }}, '{{ user_obj.get_full_name|default:user_obj.username }}')" title="{% if user_obj.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                        <i class="bi bi-{% if user_obj.is_active %}pause{% else %}play{% endif %}"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="confirmDeleteUser('{{ user_obj.id }}', '{{ user_obj.get_full_name|default:user_obj.username }}')" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="bi bi-people" style="font-size: 3rem; opacity: 0.3;"></i>
+                                <br>
+                                No users found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addUserForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="firstName" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="firstName" name="first_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="lastName" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="lastName" name="last_name" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="department" class="form-label">Unit</label>
+                            <select class="form-select" id="department" name="department">
+                                <option value="">Select Unit</option>
+                                {% for value, label in unit_choices %}
+                                <option value="{{ value }}" {% if value in taken_departments %}disabled{% endif %}>
+                                    {{ label }}{% if value in taken_departments %} (Already Taken){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Only one user per unit is allowed</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="role" class="form-label">Role</label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="">Select Role</option>
+                                <option value="admin">Administrator</option>
+                                <option value="unit_head">Unit Head</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirmPassword" name="confirm_password" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveUserBtn">Save User</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="editUserId" name="user_id">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editFirstName" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="editFirstName" name="first_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editLastName" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="editLastName" name="last_name" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="editUsername" name="username" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" name="email" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editDepartment" class="form-label">Unit</label>
+                            <select class="form-select" id="editDepartment" name="department">
+                                <option value="">Select Unit</option>
+                                {% for value, label in unit_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editRole" class="form-label">Role</label>
+                            <select class="form-select" id="editRole" name="role" required>
+                                <option value="">Select Role</option>
+                                <option value="admin">Administrator</option>
+                                <option value="unit_head">Unit Head</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPassword" class="form-label">New Password (leave blank to keep current)</label>
+                        <input type="password" class="form-control" id="editPassword" name="password">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="updateUserBtn">Update User</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="toggleUserStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="toggleStatusModalTitle">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="bi bi-exclamation-triangle-fill text-warning me-3" style="font-size: 2rem;"></i>
+                    <div>
+                        <p class="mb-1" id="toggleStatusMessage">Are you sure you want to perform this action?</p>
+                        <small class="text-muted">This action can be reversed later.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn" id="confirmToggleStatusBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete User Confirmation Modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+                    Confirm Delete User
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger d-flex align-items-center" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-3"></i>
+                    <div>
+                        <strong>Warning!</strong> This action cannot be undone.
+                    </div>
+                </div>
+                <p id="deleteUserMessage">Are you sure you want to permanently delete this user?</p>
+                <div class="bg-light p-3 rounded">
+                    <small class="text-muted">
+                        <strong>What will happen:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>User account will be permanently removed</li>
+                            <li>All associated data will be deleted</li>
+                            <li>User will lose access immediately</li>
+                            <li>This action cannot be reversed</li>
+                        </ul>
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteUserBtn">
+                    <i class="bi bi-trash me-2"></i>Delete User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Logout Confirmation Modal -->
+<div class="modal fade" id="logoutModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Logout</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout? Any unsaved changes will be lost.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sidebar toggle
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    
+    if (hamburger && sidebar) {
+        hamburger.addEventListener('click', function() {
+            sidebar.classList.toggle('show');
+        });
+        
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(e) {
+            if (window.innerWidth <= 768 && !sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+                sidebar.classList.remove('show');
+            }
+        });
+    }
+    
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        const debounceFunc = debounce || function(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        };
+        
+        searchInput.addEventListener('input', debounceFunc(function() {
+            const query = this.value;
+            if (query.length > 2 || query.length === 0) {
+                window.location.href = `?search=${encodeURIComponent(query)}`;
+            }
+        }, 500));
+    }
+    
+    // Add user form
+    const saveUserBtn = document.getElementById('saveUserBtn');
+    if (saveUserBtn) {
+        saveUserBtn.addEventListener('click', function() {
+            const form = document.getElementById('addUserForm');
+            if (!form) return;
+            
+            const formData = new FormData(form);
+            
+            // Validate password match
+            const password = formData.get('password');
+            const confirmPassword = formData.get('confirm_password');
+            
+            if (password !== confirmPassword) {
+                showToast('Passwords do not match!', 'error');
+                return;
+            }
+        
+        // Validate department selection for unit_head role
+        const role = formData.get('role');
+        const department = formData.get('department');
+        
+        if (role === 'unit_head' && !department) {
+            showToast('Please select a unit for Unit Head role', 'error');
+            return;
+        }
+        
+        // Check if selected department is already taken
+        const departmentSelect = document.getElementById('department');
+        const selectedOption = departmentSelect.options[departmentSelect.selectedIndex];
+        
+        if (selectedOption.disabled) {
+            showToast('This unit is already taken. Please select another unit.', 'error');
+            return;
+        }
+        
+        // Submit form
+        fetch('{% url "ajax_add_user" %}', {
+            method: 'POST',
+            body: JSON.stringify({
+                first_name: formData.get('first_name'),
+                last_name: formData.get('last_name'),
+                username: formData.get('username'),
+                email: formData.get('email'),
+                department: formData.get('department'),
+                role: formData.get('role'),
+                password: formData.get('password')
+            }),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+                form.reset();
+                setTimeout(() => {
+                location.reload();
+            }, 1000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred. Please try again.', 'error');
+        });
+        });
+    }
+    
+    // Edit user form
+    const updateUserBtn = document.getElementById('updateUserBtn');
+    if (updateUserBtn) {
+        updateUserBtn.addEventListener('click', function() {
+            const form = document.getElementById('editUserForm');
+            if (!form) return;
+            
+            const formData = new FormData(form);
+        
+        // Validate password match if provided
+        const password = formData.get('password');
+        if (password && password.length > 0 && password.length < 8) {
+            showToast('Password must be at least 8 characters long!', 'error');
+            return;
+        }
+        
+        // Check if selected department is already taken by another user
+        const departmentSelect = document.getElementById('editDepartment');
+        const selectedOption = departmentSelect.options[departmentSelect.selectedIndex];
+        
+        if (selectedOption.disabled) {
+            showToast('This unit is already taken by another user. Please select another unit.', 'error');
+            return;
+        }
+        
+        // Submit form
+        fetch('{% url "ajax_edit_user" %}', {
+            method: 'POST',
+            body: JSON.stringify({
+                user_id: formData.get('user_id'),
+                first_name: formData.get('first_name'),
+                last_name: formData.get('last_name'),
+                username: formData.get('username'),
+                email: formData.get('email'),
+                department: formData.get('department'),
+                role: formData.get('role'),
+                password: password || null
+            }),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+                setTimeout(() => {
+                location.reload();
+            }, 1000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred. Please try again.', 'error');
+        });
+        });
+    }
+});
+
+// Global functions for onclick handlers
+function editUser(userId) {
+    // Use showToast from global scope or create fallback
+    
+    // Fetch user data and populate edit form
+    fetch(`/budget/ajax/get-user/${userId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('editUserId').value = data.user.id;
+                document.getElementById('editFirstName').value = data.user.first_name;
+                document.getElementById('editLastName').value = data.user.last_name;
+                document.getElementById('editUsername').value = data.user.username;
+                document.getElementById('editEmail').value = data.user.email;
+                document.getElementById('editDepartment').value = data.user.department;
+                document.getElementById('editRole').value = data.user.role;
+                
+                // Update department options to show which are taken (excluding current user)
+                updateEditDepartmentOptions(data.user.department);
+                
+                const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+                modal.show();
+            } else {
+                showToast('Failed to load user data', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Failed to load user data', 'error');
+        });
+}
+
+function updateEditDepartmentOptions(currentDepartment) {
+    const departmentSelect = document.getElementById('editDepartment');
+    const takenDepartments = {{ taken_departments|safe }};
+    
+    // Clear existing options
+    departmentSelect.innerHTML = '<option value="">Select Unit</option>';
+    
+    // Add options using a single loop
+    const unitChoices = [
+        {% for value, label in unit_choices %}
+        { value: "{{ value }}", label: "{{ label }}" }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    unitChoices.forEach(function(choice) {
+        const option = document.createElement('option');
+        option.value = choice.value;
+        option.textContent = choice.label;
+        
+        // Disable if taken by another user (not current user)
+        if (takenDepartments.includes(choice.value) && choice.value !== currentDepartment) {
+            option.disabled = true;
+            option.textContent += ' (Already Taken)';
+        }
+        
+        departmentSelect.appendChild(option);
+    });
+}
+
+function toggleUserStatus(userId, isActive) {
+    // Use showToast from global scope or create fallback
+    
+    fetch('{% url "ajax_toggle_user_status" %}', {
+        method: 'POST',
+        body: JSON.stringify({
+            user_id: userId
+        }),
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('An error occurred while updating user status. Please try again.', 'error');
+    });
+}
+
+function deleteUser(userId) {
+    // Use showToast from global scope or create fallback
+    
+    fetch('{% url "ajax_delete_user" %}', {
+        method: 'POST',
+        body: JSON.stringify({
+            user_id: userId
+        }),
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('An error occurred while deleting user. Please try again.', 'error');
+    });
+}
+
+// Variables to store user data for confirmation modals
+let currentUserId = null;
+let currentUserName = null;
+let currentUserStatus = null;
+
+// Function to show deactivate/activate confirmation modal
+function confirmToggleUserStatus(userId, isActive, userName) {
+    currentUserId = userId;
+    currentUserStatus = isActive;
+    currentUserName = userName;
+    
+    const modal = document.getElementById('toggleUserStatusModal');
+    const title = document.getElementById('toggleStatusModalTitle');
+    const message = document.getElementById('toggleStatusMessage');
+    const confirmBtn = document.getElementById('confirmToggleStatusBtn');
+    
+    if (isActive) {
+        title.textContent = 'Confirm Deactivate User';
+        message.innerHTML = `Are you sure you want to <strong>deactivate</strong> user <strong>"${userName}"</strong>?`;
+        confirmBtn.textContent = 'Deactivate User';
+        confirmBtn.className = 'btn btn-warning';
+    } else {
+        title.textContent = 'Confirm Activate User';
+        message.innerHTML = `Are you sure you want to <strong>activate</strong> user <strong>"${userName}"</strong>?`;
+        confirmBtn.textContent = 'Activate User';
+        confirmBtn.className = 'btn btn-success';
+    }
+    
+    const toggleModal = new bootstrap.Modal(modal);
+    toggleModal.show();
+}
+
+// Function to show delete confirmation modal
+function confirmDeleteUser(userId, userName) {
+    currentUserId = userId;
+    currentUserName = userName;
+    
+    const message = document.getElementById('deleteUserMessage');
+    message.innerHTML = `Are you sure you want to permanently delete user <strong>"${userName}"</strong>?`;
+    
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+    deleteModal.show();
+}
+
+// Event listener for confirm toggle status button
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmToggleBtn = document.getElementById('confirmToggleStatusBtn');
+    if (confirmToggleBtn) {
+        confirmToggleBtn.addEventListener('click', function() {
+            if (currentUserId && currentUserStatus !== null) {
+                // Call the actual toggle function
+                toggleUserStatus(currentUserId, currentUserStatus);
+                
+                // Hide the modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('toggleUserStatusModal'));
+                if (modal) {
+                    modal.hide();
+                }
+                
+                // Reset variables
+                currentUserId = null;
+                currentUserStatus = null;
+                currentUserName = null;
+            }
+        });
+    }
+
+    // Event listener for confirm delete button
+    const confirmDeleteBtn = document.getElementById('confirmDeleteUserBtn');
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', function() {
+            if (currentUserId) {
+                // Call the actual delete function
+                deleteUser(currentUserId);
+                
+                // Hide the modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteUserModal'));
+                if (modal) {
+                    modal.hide();
+                }
+                
+                // Reset variables
+                currentUserId = null;
+                currentUserName = null;
+            }
+        });
+    }
+});
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+function confirmLogout() {
+    event.preventDefault();
+    const modal = new bootstrap.Modal(document.getElementById('logoutModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

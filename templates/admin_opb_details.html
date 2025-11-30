@@ -1,0 +1,1395 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}OPB Details - AOBP System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 250px;
+        background: var(--card-bg);
+        border-right: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .sidebar.collapsed {
+        width: 70px;
+    }
+    
+    .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--border-color);
+        text-align: center;
+    }
+    
+    .sidebar-header h4 {
+        margin: 0;
+        color: var(--text-primary);
+        transition: opacity 0.3s ease;
+    }
+    
+    .sidebar.collapsed .sidebar-header h4 {
+        opacity: 0;
+    }
+    
+    .sidebar-nav {
+        padding: 20px 0;
+    }
+    
+    .nav-item {
+        margin-bottom: 5px;
+    }
+    
+    .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+    }
+    
+    .nav-link:hover {
+        background: rgba(102, 126, 234, 0.1);
+        color: var(--primary-color);
+        border-left-color: var(--primary-color);
+    }
+    
+    .nav-link.active {
+        background: rgba(102, 126, 234, 0.1);
+        color: var(--primary-color);
+        border-left-color: var(--primary-color);
+    }
+    
+    .nav-link i {
+        width: 20px;
+        margin-right: 15px;
+        text-align: center;
+    }
+    
+    .sidebar.collapsed .nav-link span {
+        opacity: 0;
+        width: 0;
+        overflow: hidden;
+    }
+    
+    .main-content {
+        margin-left: 250px;
+        min-height: 100vh;
+        background: var(--bg-secondary);
+        transition: margin-left 0.3s ease;
+    }
+    
+    .main-content.expanded {
+        margin-left: 70px;
+    }
+    
+    .top-navbar {
+        background: var(--card-bg);
+        border-bottom: 1px solid var(--border-color);
+        padding: 15px 30px;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+    
+    .content-area {
+        padding: 30px;
+    }
+    
+    .hamburger {
+        display: none;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--text-primary);
+        cursor: pointer;
+    }
+    
+    @media (max-width: 768px) {
+        .sidebar {
+            transform: translateX(-100%);
+        }
+        
+        .sidebar.show {
+            transform: translateX(0);
+        }
+        
+        .main-content {
+            margin-left: 0;
+        }
+        
+        .hamburger {
+            display: block;
+        }
+    }
+
+    /* OPB Document Styles */
+    .document {
+        max-width: 210mm; /* A4 width */
+        margin: 0 auto;
+        background: white;
+        padding: 15px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        min-height: 297mm; /* A4 height */
+        font-family: 'Times New Roman', serif;
+        font-size: 11px;
+        line-height: 1.2;
+        color: #000;
+    }
+
+    /* Document Header */
+    .document-header {
+        text-align: right;
+        margin-bottom: 15px;
+        font-size: 9px;
+    }
+
+    .control-number {
+        border: 1px solid #000;
+        padding: 6px 8px;
+        display: inline-block;
+        background-color: white;
+        font-size: 9px;
+        line-height: 1.1;
+    }
+
+    /* Main Header */
+    .main-header {
+        display: flex;
+        align-items: center;
+        border: 2px solid #000;
+        padding: 10px;
+        margin-bottom: 15px;
+        background-color: white;
+    }
+
+    .logo-left, .logo-right {
+        flex: 0 0 70px;
+    }
+
+    .logo-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #e8f4f8;
+        position: relative;
+    }
+
+    .logo-content {
+        font-size: 8px;
+        text-align: center;
+        font-weight: bold;
+        color: #666;
+    }
+
+    .header-center {
+        flex: 1;
+        text-align: center;
+        padding: 0 15px;
+    }
+
+    .republic {
+        font-size: 10px;
+        margin-bottom: 2px;
+        font-weight: normal;
+    }
+
+    .college-name {
+        font-size: 11px;
+        font-weight: bold;
+        margin-bottom: 2px;
+        line-height: 1.1;
+    }
+
+    .address {
+        font-size: 9px;
+        margin-bottom: 6px;
+        font-style: italic;
+    }
+
+    .logbook {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 3px;
+        letter-spacing: 3px;
+    }
+
+    .subtitle {
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    /* Form Info */
+    .form-info {
+        margin-bottom: 15px;
+        font-size: 11px;
+    }
+
+    .year-unit {
+        display: flex;
+        gap: 30px;
+    }
+
+    .year-unit div {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .unit-display {
+        border-bottom: 1px solid #000;
+        background: transparent;
+        font-size: 11px;
+        width: 180px;
+        padding: 1px 0;
+        font-family: 'Times New Roman', serif;
+        display: inline-block;
+    }
+
+    /* Table Styles */
+    .table-container {
+        margin-bottom: 15px;
+        overflow-x: auto;
+    }
+
+    .opb-table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid #000;
+        font-size: 9px;
+        font-family: 'Times New Roman', serif;
+    }
+
+    .opb-table th {
+        background-color: white;
+        border: 1px solid #000;
+        padding: 4px 2px;
+        text-align: center;
+        font-weight: bold;
+        vertical-align: middle;
+        font-size: 9px;
+        line-height: 1.1;
+    }
+
+    .opb-table td {
+        border: 1px solid #000;
+        padding: 4px 2px;
+        vertical-align: middle;
+        height: 25px;
+        font-size: 9px;
+        line-height: 1.1;
+    }
+
+    /* Column widths to match the original exactly */
+    .opb-table th:nth-child(1),
+    .opb-table td:nth-child(1) {
+        width: 7%;
+    }
+
+    .opb-table th:nth-child(2),
+    .opb-table td:nth-child(2) {
+        width: 9%;
+    }
+
+    .opb-table th:nth-child(3),
+    .opb-table td:nth-child(3) {
+        width: 12%;
+    }
+
+    .opb-table th:nth-child(4),
+    .opb-table td:nth-child(4) {
+        width: 11%;
+    }
+
+    .opb-table th:nth-child(5),
+    .opb-table td:nth-child(5) {
+        width: 16%;
+    }
+
+    .opb-table th:nth-child(6),
+    .opb-table td:nth-child(6) {
+        width: 10%;
+    }
+
+    .opb-table th:nth-child(7),
+    .opb-table td:nth-child(7) {
+        width: 13%;
+    }
+
+    .opb-table th:nth-child(8),
+    .opb-table td:nth-child(8) {
+        width: 11%;
+    }
+
+    .opb-table th:nth-child(9),
+    .opb-table td:nth-child(9) {
+        width: 11%;
+    }
+
+    /* Signature Section */
+    .signature-section {
+        display: flex;
+        gap: 0;
+        margin-bottom: 20px;
+        margin-top: 30px;
+    }
+
+    .signature-box {
+        flex: 1;
+        border: 1px solid #000;
+        min-height: 80px;
+    }
+
+    .signature-box:not(:last-child) {
+        border-right: none;
+    }
+
+    .signature-header {
+        background-color: white;
+        padding: 3px 6px;
+        font-weight: bold;
+        font-size: 9px;
+        border-bottom: 1px solid #000;
+        text-align: left;
+    }
+
+    .signature-content {
+        padding: 6px;
+        height: 65px;
+        font-size: 9px;
+    }
+
+    .name-field {
+        font-weight: bold;
+        margin-bottom: 4px;
+        font-size: 9px;
+        text-align: center;
+    }
+
+    .position {
+        font-size: 9px;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+
+    .date-field {
+        font-size: 9px;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+    }
+
+    /* Document Footer */
+    .document-footer {
+        display: flex;
+        justify-content: space-between;
+        font-size: 9px;
+        border-top: 1px solid #000;
+        padding-top: 6px;
+        margin-top: auto;
+        font-family: 'Times New Roman', serif;
+    }
+
+    .footer-left, .footer-center, .footer-right {
+        flex: 1;
+    }
+
+    .footer-center {
+        text-align: center;
+    }
+
+    .footer-right {
+        text-align: right;
+    }
+
+    /* Print Styles */
+    @media print {
+        /* Hide everything except the document */
+        body * {
+            visibility: hidden;
+        }
+        
+        .document, .document * {
+            visibility: visible;
+        }
+        
+        /* Position the document at the top of the page */
+        .document {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 15mm;
+            box-shadow: none;
+            background: white;
+            font-family: 'Times New Roman', serif;
+            font-size: 11px;
+            line-height: 1.2;
+            color: #000;
+            page-break-inside: avoid;
+        }
+        
+        /* Ensure single page */
+        .document {
+            height: auto;
+            min-height: auto;
+            max-height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Adjust table for single page */
+        .opb-table {
+            font-size: 8px;
+            page-break-inside: avoid;
+        }
+        
+        .opb-table td {
+            padding: 2px 1px;
+            height: 20px;
+        }
+        
+        .opb-table th {
+            padding: 2px 1px;
+        }
+        
+        /* Compact signature section */
+        .signature-section {
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .signature-box {
+            min-height: 60px;
+        }
+        
+        .signature-content {
+            height: 45px;
+            padding: 3px;
+        }
+        
+        /* Hide sidebar and navigation */
+        .sidebar,
+        .top-navbar,
+        .content-area > *:not(.document),
+        .mt-4,
+        .text-center {
+            display: none !important;
+        }
+        
+        /* Ensure document takes full width */
+        .main-content {
+            margin-left: 0 !important;
+            width: 100% !important;
+        }
+        
+        .content-area {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+    }
+
+    /* Responsive adjustments for document */
+    @media (max-width: 768px) {
+        .document {
+            padding: 8px;
+            margin: 5px;
+        }
+        
+        .main-header {
+            flex-direction: column;
+            gap: 10px;
+            padding: 8px;
+        }
+        
+        .logo-left, .logo-right {
+            order: -1;
+        }
+        
+        .year-unit {
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .signature-section {
+            flex-direction: column;
+        }
+        
+        .signature-box:not(:last-child) {
+            border-right: 1px solid #000;
+            border-bottom: none;
+        }
+        
+        .document-footer {
+            flex-direction: column;
+            gap: 3px;
+            text-align: center;
+        }
+        
+        .opb-table {
+            font-size: 8px;
+        }
+    }
+    
+    .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--border-color);
+        text-align: center;
+    }
+    
+    .sidebar-header h4 {
+        margin: 0;
+        color: var(--text-primary);
+        transition: opacity 0.3s ease;
+    }
+    
+    .sidebar.collapsed .sidebar-header h4 {
+        opacity: 0;
+    }
+    
+    .sidebar-nav {
+        padding: 20px 0;
+    }
+    
+    .nav-item {
+        margin-bottom: 5px;
+    }
+    
+    .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+    }
+    
+    .nav-link:hover {
+        background: rgba(102, 126, 234, 0.1);
+        color: var(--primary-color);
+        border-left-color: var(--primary-color);
+    }
+    
+    .nav-link.active {
+        background: rgba(102, 126, 234, 0.1);
+        color: var(--primary-color);
+        border-left-color: var(--primary-color);
+    }
+    
+    .nav-link i {
+        width: 20px;
+        margin-right: 15px;
+        text-align: center;
+    }
+    
+    .sidebar.collapsed .nav-link span {
+        opacity: 0;
+        width: 0;
+        overflow: hidden;
+    }
+    
+    .main-content {
+        margin-left: 250px;
+        min-height: 100vh;
+        background: var(--bg-secondary);
+        transition: margin-left 0.3s ease;
+    }
+    
+    .main-content.expanded {
+        margin-left: 70px;
+    }
+    
+    .top-navbar {
+        background: var(--card-bg);
+        border-bottom: 1px solid var(--border-color);
+        padding: 15px 30px;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+    
+    .content-area {
+        padding: 30px;
+    }
+    
+    .details-container {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        margin-bottom: 30px;
+    }
+    
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-for-approval {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-enhancement {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .hamburger {
+        display: none;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--text-primary);
+        cursor: pointer;
+    }
+    
+    @media (max-width: 768px) {
+        .sidebar {
+            transform: translateX(-100%);
+        }
+        
+        .sidebar.show {
+            transform: translateX(0);
+        }
+        
+        .main-content {
+            margin-left: 0;
+        }
+        
+        .hamburger {
+            display: block;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h4><i class="bi bi-buildings me-2"></i>DEBESMSCAT AOBP</h4>
+    </div>
+    
+    <nav class="sidebar-nav">
+        <div class="nav-item">
+            <a href="{% url 'admin_dashboard' %}" class="nav-link">
+                <i class="bi bi-house-door"></i>
+                <span>Dashboard</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'admin_users' %}" class="nav-link">
+                <i class="bi bi-people"></i>
+                <span>User Management</span>
+            </a>
+        </div>
+        
+        <div class="nav-item">
+            <a href="{% url 'admin_opb' %}" class="nav-link active">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>OPB Submissions</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'admin_reports' %}" class="nav-link">
+                <i class="bi bi-file-earmark-bar-graph"></i>
+                <span>Reports</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'admin_settings' %}" class="nav-link">
+                <i class="bi bi-gear"></i>
+                <span>Settings</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="#" class="nav-link" onclick="confirmLogout()">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+    <!-- Top Navbar -->
+    <div class="top-navbar">
+        <div class="d-flex align-items-center">
+            <button class="hamburger me-3" id="hamburger">
+                <i class="bi bi-list"></i>
+            </button>
+            <h3 class="mb-0">OPB Details</h3>
+        </div>
+        
+        <div class="d-flex align-items-center gap-3">
+            <button class="btn btn-outline-primary" id="themeToggle">
+                <i class="bi bi-moon"></i>
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-person-circle me-2"></i>{{ user.get_full_name|default:user.username }}
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'logout' %}" onclick="confirmLogout()"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Content Area -->
+    <div class="content-area">
+        {% csrf_token %}
+        <!-- OPB Document Display -->
+        <div class="document">
+            <!-- Document Header -->
+            <div class="document-header">
+                <div class="control-number">
+                    Document Control Number:<br>
+                    <strong>DEBESMSCAT-F-PADS-05</strong>
+                </div>
+            </div>
+
+            <!-- Main Header -->
+            <div class="main-header">
+                <div class="logo-left">
+                    <div class="logo-circle">
+                        <img src="{% static 'images/logo.jpeg' %}" alt="Logo" class="logo-content" style="width: 60px; height: 60px; object-fit: contain;">
+                    </div>
+                </div>
+                <div class="header-center">
+                    <div class="republic">Republic of the Philippines</div>
+                    <div class="college-name">DR. EMILIO B. ESPINOSA SR., MEMORIAL STATE COLLEGE OF AGRICULTURE AND TECHNOLOGY</div>
+                    <div class="address">Cabitan, Mandaon, Masbate | www.debesmscat.edu.ph</div>
+                    <div class="logbook">FORM</div>
+                    <div class="subtitle">Operational Plan and Budget</div>
+                </div>
+                <div class="logo-right">
+                    <div class="logo-circle">
+                        <img src="{% static 'images/bp.jpeg' %}" alt="Logo" class="logo-content" style="width: 60px; height: 60px; object-fit: contain;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Info -->
+            <div class="form-info">
+                <div class="year-unit">
+                    <div>Year: <strong><u>FY {{ request.fiscal_year }}</u></strong></div>
+                    <div>Unit: <span class="unit-display">{{ request.unit|default:"____________________" }}</span></div>
+                </div>
+            </div>
+
+            <!-- Main Table -->
+            <div class="table-container">
+                <table class="opb-table">
+                    <thead>
+                        <tr>
+                            <th>KRA NO.</th>
+                            <th>OBJECTIVE<br>NO.</th>
+                            <th>INDICATORS</th>
+                            <th>ANNUAL<br>TARGET 2026</th>
+                            <th>ACTIVITIES</th>
+                            <th>TIMEFRAME</th>
+                            <th>BUDGET/AMOUNT<br>ALLOCATED</th>
+                            <th>SOURCE<br>OF FUND</th>
+                            <th>RESPONSIBLE<br>UNITS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in request.items.all %}
+                        <tr class="data-row">
+                            <td>{{ item.kra_no|default:"" }}</td>
+                            <td>{{ item.objective_no|default:"" }}</td>
+                            <td>{{ item.indicators|default:"" }}</td>
+                            <td>{{ item.annual_target|default:"" }}</td>
+                            <td>{{ item.activities|default:"" }}</td>
+                            <td>{{ item.timeframe|default:"" }}</td>
+                            <td>{{ item.budget_amount|floatformat:2|default:"0.00" }}</td>
+                            <td>{{ item.source_of_fund|default:"" }}</td>
+                            <td>{{ item.responsible_units|default:"" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr class="data-row">
+                            <td colspan="9" class="text-center">No OPB items found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Signature Section -->
+            <div class="signature-section">
+                <div class="signature-box">
+                    <div class="signature-header">Prepared By:</div>
+                    <div class="signature-content">
+                        <div class="name-field">{{ request.department_head.get_full_name|default:request.department_head.username }}</div>
+                        <div class="position">{{ request.get_department_display }} Head</div>
+                        <div class="date-field">Date: {{ request.created_at|date:"M d, Y" }}</div>
+                    </div>
+                </div>
+                <div class="signature-box">
+                    <div class="signature-header">Reviewed By:</div>
+                    <div class="signature-content">
+                        <div class="name-field">[NAME]</div>
+                        <div class="position">Vice President</div>
+                        <div class="date-field">Date: _______________</div>
+                    </div>
+                </div>
+                <div class="signature-box">
+                    <div class="signature-header">Approved By:</div>
+                    <div class="signature-content">
+                        <div class="name-field">ARNEL B. MILLESCA, Ed. D, J.D.</div>
+                        <div class="position">SUC President III</div>
+                        <div class="date-field">Date: _______________</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="document-footer">
+                <div class="footer-left">Effectivity Date: December 1, 2025</div>
+                <div class="footer-center">Rev. No.: 01</div>
+                <div class="footer-right">Page __ of __</div>
+            </div>
+        </div>
+        
+        <!-- Request Summary -->
+        <div class="mt-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">Request Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Unit Head:</strong> {{ request.department_head.get_full_name|default:request.department_head.username }}</p>
+                            <p><strong>Unit:</strong> <span class="badge bg-info">{{ request.get_department_display }}</span></p>
+                            <p><strong>Status:</strong> <span class="status-badge status-{{ request.status }}">{{ request.get_status_display }}</span></p>
+                            <p><strong>Total Items:</strong> <span class="badge bg-primary">{{ request.item_count }} items</span></p>
+                            <p><strong>Total Budget:</strong> <strong>₱{{ request.total_budget_amount|floatformat:2 }}</strong></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">Admin Actions</h6>
+                        </div>
+                        <div class="card-body">
+                            {% if request.status == 'pending' %}
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success" onclick="approveRequest('{{ request.id }}')">
+                                    <i class="bi bi-check-circle me-2"></i>For Approval
+                                </button>
+                                <button class="btn btn-danger" onclick="rejectRequest('{{ request.id }}')">
+                                    <i class="bi bi-x-circle me-2"></i>Enhancement
+                                </button>
+                            </div>
+                            {% else %}
+                            <p class="status-badge status-{{ request.status }}">Request has been {{ request.get_status_display }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{% url 'admin_opb' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to OPB
+            </a>
+            <button class="btn btn-outline-primary ms-2" onclick="printDocument()">
+                <i class="bi bi-printer me-2"></i>Print
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Approve Request Modal -->
+<div class="modal fade" id="approveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Admin Notes For Approval</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="approveForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="approveRequestId" name="request_id">
+                    <input type="hidden" name="type" value="opb">
+                    <div class="mb-3">
+                        <textarea class="form-control" id="approveNotes" name="notes" rows="3" placeholder="Add any notes about this approval..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmApproveBtn">For Approval</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Request Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Admin Notes For Enhancement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="rejectForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="rejectRequestId" name="request_id">
+                    <input type="hidden" name="type" value="opb">
+                    <div class="mb-3">
+                        <textarea class="form-control" id="rejectNotes" name="notes" rows="3" placeholder="Add any notes about this approval..." required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmRejectBtn">Enhancement</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Logout Confirmation Modal -->
+<div class="modal fade" id="logoutModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Logout</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to logout? Any unsaved changes will be lost.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sidebar toggle
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    
+    hamburger.addEventListener('click', function() {
+        sidebar.classList.toggle('show');
+    });
+    
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768 && !sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+            sidebar.classList.remove('show');
+        }
+    });
+    
+    // Approve request
+    document.getElementById('confirmApproveBtn').addEventListener('click', function() {
+        const form = document.getElementById('approveForm');
+        const formData = new FormData(form);
+        
+        fetch('{% url "ajax_approve_request" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('approveModal')).hide();
+                setTimeout(() => {
+                location.reload();
+            }, 1000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred. Please try again.', 'error');
+        });
+    });
+    
+    // Reject request
+    document.getElementById('confirmRejectBtn').addEventListener('click', function() {
+        const form = document.getElementById('rejectForm');
+        const formData = new FormData(form);
+        
+        // Validate required fields
+        if (!formData.get('notes').trim()) {
+            showToast('Please provide a reason for rejection.', 'error');
+            return;
+        }
+        
+        fetch('{% url "ajax_reject_request" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('rejectModal')).hide();
+                setTimeout(() => {
+                location.reload();
+            }, 1000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred. Please try again.', 'error');
+        });
+    });
+});
+
+// Approve request function
+function approveRequest(requestId) {
+    document.getElementById('approveRequestId').value = requestId;
+    const modal = new bootstrap.Modal(document.getElementById('approveModal'));
+    modal.show();
+}
+
+// Reject request function
+function rejectRequest(requestId) {
+    document.getElementById('rejectRequestId').value = requestId;
+    const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
+    modal.show();
+}
+
+function confirmLogout() {
+    event.preventDefault();
+    const modal = new bootstrap.Modal(document.getElementById('logoutModal'));
+    modal.show();
+}
+
+// Print document function
+function printDocument() {
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    const documentContent = document.querySelector('.document').outerHTML;
+    
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>OPB Request - Print</title>
+            <style>
+                @page {
+                    size: A4 portrait;
+                    margin: 15mm;
+                }
+                
+                body {
+                    margin: 0;
+                    padding: 0;
+                    font-family: 'Times New Roman', serif;
+                    font-size: 11px;
+                    line-height: 1.2;
+                    color: #000;
+                }
+                
+                .document {
+                    max-width: 210mm;
+                    margin: 0 auto;
+                    background: white;
+                    padding: 0;
+                    box-shadow: none;
+                    min-height: 297mm;
+                }
+                
+                .document-header {
+                    text-align: right;
+                    margin-bottom: 15px;
+                    font-size: 9px;
+                }
+                
+                .control-number {
+                    border: 1px solid #000;
+                    padding: 6px 8px;
+                    display: inline-block;
+                    background-color: white;
+                    font-size: 9px;
+                    line-height: 1.1;
+                }
+                
+                .main-header {
+                    display: flex;
+                    align-items: center;
+                    border: 2px solid #000;
+                    padding: 10px;
+                    margin-bottom: 15px;
+                    background-color: white;
+                }
+                
+                .logo-left, .logo-right {
+                    flex: 0 0 70px;
+                }
+                
+                .logo-circle {
+                    width: 60px;
+                    height: 60px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    position: relative;
+                }
+                
+                .logo-content {
+                    font-size: 8px;
+                    text-align: center;
+                    font-weight: bold;
+                    color: #666;
+                }
+                
+                .header-center {
+                    flex: 1;
+                    text-align: center;
+                    padding: 0 15px;
+                }
+                
+                .republic {
+                    font-size: 10px;
+                    margin-bottom: 2px;
+                    font-weight: normal;
+                }
+                
+                .college-name {
+                    font-size: 11px;
+                    font-weight: bold;
+                    margin-bottom: 2px;
+                    line-height: 1.1;
+                }
+                
+                .address {
+                    font-size: 9px;
+                    margin-bottom: 6px;
+                    font-style: italic;
+                }
+                
+                .logbook {
+                    font-size: 16px;
+                    font-weight: bold;
+                    margin-bottom: 3px;
+                    letter-spacing: 3px;
+                }
+                
+                .subtitle {
+                    font-size: 12px;
+                    font-weight: bold;
+                }
+                
+                .form-info {
+                    margin-bottom: 15px;
+                    font-size: 11px;
+                }
+                
+                .year-unit {
+                    display: flex;
+                    gap: 30px;
+                }
+                
+                .year-unit div {
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                }
+                
+                .unit-display {
+                    border-bottom: 1px solid #000;
+                    background: transparent;
+                    font-size: 11px;
+                    width: 180px;
+                    padding: 1px 0;
+                    font-family: 'Times New Roman', serif;
+                    display: inline-block;
+                }
+                
+                .table-container {
+                    margin-bottom: 15px;
+                    overflow-x: auto;
+                }
+                
+                .opb-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    border: 1px solid #000;
+                    font-size: 8px;
+                    font-family: 'Times New Roman', serif;
+                }
+                
+                .opb-table th {
+                    background-color: white;
+                    border: 1px solid #000;
+                    padding: 2px 1px;
+                    text-align: center;
+                    font-weight: bold;
+                    vertical-align: middle;
+                    font-size: 8px;
+                    line-height: 1.1;
+                }
+                
+                .opb-table td {
+                    border: 1px solid #000;
+                    padding: 2px 1px;
+                    vertical-align: middle;
+                    height: 18px;
+                    font-size: 8px;
+                    line-height: 1.1;
+                }
+                
+                .opb-table th:nth-child(1),
+                .opb-table td:nth-child(1) { width: 7%; }
+                .opb-table th:nth-child(2),
+                .opb-table td:nth-child(2) { width: 9%; }
+                .opb-table th:nth-child(3),
+                .opb-table td:nth-child(3) { width: 12%; }
+                .opb-table th:nth-child(4),
+                .opb-table td:nth-child(4) { width: 11%; }
+                .opb-table th:nth-child(5),
+                .opb-table td:nth-child(5) { width: 16%; }
+                .opb-table th:nth-child(6),
+                .opb-table td:nth-child(6) { width: 10%; }
+                .opb-table th:nth-child(7),
+                .opb-table td:nth-child(7) { width: 13%; }
+                .opb-table th:nth-child(8),
+                .opb-table td:nth-child(8) { width: 11%; }
+                .opb-table th:nth-child(9),
+                .opb-table td:nth-child(9) { width: 11%; }
+                
+                .signature-section {
+                    display: flex;
+                    gap: 0;
+                    margin-bottom: 20px;
+                    margin-top: 20px;
+                }
+                
+                .signature-box {
+                    flex: 1;
+                    border: 1px solid #000;
+                    min-height: 60px;
+                }
+                
+                .signature-box:not(:last-child) {
+                    border-right: none;
+                }
+                
+                .signature-header {
+                    background-color: white;
+                    padding: 3px 6px;
+                    font-weight: bold;
+                    font-size: 8px;
+                    border-bottom: 1px solid #000;
+                    text-align: left;
+                }
+                
+                .signature-content {
+                    padding: 3px;
+                    height: 45px;
+                    font-size: 8px;
+                }
+                
+                .name-field {
+                    font-weight: bold;
+                    margin-bottom: 4px;
+                    font-size: 8px;
+                    text-align: center;
+                }
+                
+                .position {
+                    font-size: 8px;
+                    margin-bottom: 8px;
+                    text-align: center;
+                }
+                
+                .date-field {
+                    font-size: 8px;
+                    display: flex;
+                    align-items: center;
+                    gap: 3px;
+                }
+                
+                .document-footer {
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 8px;
+                    border-top: 1px solid #000;
+                    padding-top: 6px;
+                    margin-top: auto;
+                    font-family: 'Times New Roman', serif;
+                }
+                
+                .footer-left, .footer-center, .footer-right {
+                    flex: 1;
+                }
+                
+                .footer-center {
+                    text-align: center;
+                }
+                
+                .footer-right {
+                    text-align: right;
+                }
+            </style>
+        </head>
+        <body>
+            ${documentContent}
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+    
+    // Wait for content to load, then print
+    printWindow.onload = function() {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+    };
+}
+</script>
+{% endblock %}

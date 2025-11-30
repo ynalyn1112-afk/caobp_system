@@ -1,0 +1,5 @@
+django
+requests
+uuid
+reportlab
+python-docx
